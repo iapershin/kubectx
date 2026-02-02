@@ -51,8 +51,39 @@ func parseArgs(argv []string) Op {
 		return DeleteOp{Contexts: argv[1:]}
 	}
 
-	if len(argv) == 1 {
-		v := argv[0]
+	var namespace string
+	var namespaceIndex = -1
+
+	for i := 0; i < len(argv); i++ {
+		if argv[i] == "-n" || argv[i] == "--namespace" {
+			if i+1 >= len(argv) {
+				return UnsupportedOp{Err: fmt.Errorf("'-n' requires a namespace argument")}
+			}
+			namespace = argv[i+1]
+			namespaceIndex = i
+			break
+		}
+	}
+
+	var remainingArgs []string
+	if namespaceIndex >= 0 {
+		remainingArgs = append(argv[:namespaceIndex], argv[namespaceIndex+2:]...)
+	} else {
+		remainingArgs = argv
+	}
+
+	if len(remainingArgs) == 0 {
+		if namespace != "" {
+			return UnsupportedOp{Err: fmt.Errorf("context name is required when using -n flag")}
+		}
+		if cmdutil.IsInteractiveMode(os.Stdout) {
+			return InteractiveSwitchOp{SelfCmd: os.Args[0]}
+		}
+		return ListOp{}
+	}
+
+	if len(remainingArgs) == 1 {
+		v := remainingArgs[0]
 		if v == "--help" || v == "-h" {
 			return HelpOp{}
 		}
@@ -73,7 +104,7 @@ func parseArgs(argv []string) Op {
 		if strings.HasPrefix(v, "-") && v != "-" {
 			return UnsupportedOp{Err: fmt.Errorf("unsupported option '%s'", v)}
 		}
-		return SwitchOp{Target: argv[0]}
+		return SwitchOp{Target: v, Namespace: namespace}
 	}
 	return UnsupportedOp{Err: fmt.Errorf("too many arguments")}
 }

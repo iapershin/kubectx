@@ -242,3 +242,88 @@ load common
   run ${COMMAND} -c
   [ "$status" -ne 0 ]
 }
+
+@test "switch context with namespace using -n flag" {
+  use_config config2
+  export _MOCK_NAMESPACES=1
+
+  run ${COMMAND} user1@cluster1 -n ns1
+  echo "$output"
+  [ "$status" -eq 0 ]
+  [[ "$output" = *'Switched to context "user1@cluster1" and namespace "ns1"'* ]]
+  echo "$(get_context)"
+  [[ "$(get_context)" = "user1@cluster1" ]]
+  echo "$(get_namespace)"
+  [[ "$(get_namespace)" = "ns1" ]]
+}
+
+@test "switch context with namespace using --namespace flag" {
+  use_config config2
+  export _MOCK_NAMESPACES=1
+
+  run ${COMMAND} user1@cluster1 --namespace ns2
+  echo "$output"
+  [ "$status" -eq 0 ]
+  [[ "$output" = *'Switched to context "user1@cluster1" and namespace "ns2"'* ]]
+  echo "$(get_context)"
+  [[ "$(get_context)" = "user1@cluster1" ]]
+  echo "$(get_namespace)"
+  [[ "$(get_namespace)" = "ns2" ]]
+}
+
+@test "switch context with namespace flag before context name" {
+  use_config config2
+  export _MOCK_NAMESPACES=1
+
+  run ${COMMAND} -n ns1 user2@cluster1
+  echo "$output"
+  [ "$status" -eq 0 ]
+  [[ "$output" = *'Switched to context "user2@cluster1" and namespace "ns1"'* ]]
+  echo "$(get_context)"
+  [[ "$(get_context)" = "user2@cluster1" ]]
+  echo "$(get_namespace)"
+  [[ "$(get_namespace)" = "ns1" ]]
+}
+
+@test "switch context with non-existing namespace" {
+  use_config config2
+  export _MOCK_NAMESPACES=1
+
+  run ${COMMAND} user1@cluster1 -n unknown-ns
+  echo "$output"
+  [ "$status" -eq 1 ]
+  [[ "$output" = *'no namespace exists with name "unknown-ns"'* ]]
+}
+
+@test "switch context with namespace and then switch to another context" {
+  use_config config2
+  export _MOCK_NAMESPACES=1
+
+  run ${COMMAND} user1@cluster1 -n ns1
+  [ "$status" -eq 0 ]
+  [[ "$(get_context)" = "user1@cluster1" ]]
+  [[ "$(get_namespace)" = "ns1" ]]
+
+  run ${COMMAND} user2@cluster1 -n ns2
+  [ "$status" -eq 0 ]
+  [[ "$(get_context)" = "user2@cluster1" ]]
+  [[ "$(get_namespace)" = "ns2" ]]
+}
+
+@test "-n flag without namespace value should fail" {
+  use_config config2
+
+  run ${COMMAND} -n
+  echo "$output"
+  [ "$status" -eq 1 ]
+  [[ "$output" = *"'-n' requires a namespace argument"* ]]
+}
+
+@test "-n flag without context name should fail" {
+  use_config config2
+
+  run ${COMMAND} -n ns1
+  echo "$output"
+  [ "$status" -eq 1 ]
+  [[ "$output" = *"context name is required when using -n flag"* ]]
+}
