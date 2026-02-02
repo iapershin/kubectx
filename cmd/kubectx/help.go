@@ -35,6 +35,8 @@ func printUsage(out io.Writer) error {
 	help := `USAGE:
   %PROG%                       : list the contexts
   %PROG% <NAME>                : switch to context <NAME>
+  %PROG% <NAME> -n <NS>        : switch to context <NAME> and namespace <NS>
+  %PROG% -n <NS> <NAME>        : switch to context <NAME> and namespace <NS>
   %PROG% -                     : switch to the previous context
   %PROG% -c, --current         : show the current context name
   %PROG% <NEW_NAME>=<NAME>     : rename context <NAME> to <NEW_NAME>
