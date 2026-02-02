@@ -49,7 +49,7 @@ jobs:
     - name: Build with Goreleaser
       uses: goreleaser/goreleaser-action@v5
       with:
-        version: latest
+        version: v2.0.0
         args: release --snapshot --skip publish,snapcraft --clean
     - name: Setup BATS framework
       run: sudo npm install -g bats
